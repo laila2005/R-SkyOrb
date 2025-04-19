@@ -1,199 +1,264 @@
-// dark mode switch
 document.addEventListener('DOMContentLoaded', function() {
+    // =====================
+    // Dark Mode Functionality
+    // =====================
     const darkModeToggle = document.getElementById('darkModeToggle');
     const icon = darkModeToggle.querySelector('i');
     
-    // Check for saved preference
-    const currentTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', currentTheme);
+    // Initialize theme from localStorage or prefer-color-scheme
+    const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    let currentTheme = localStorage.getItem('theme') || 
+                      (prefersDarkScheme.matches ? 'dark' : 'light');
     
-    // Update button state
-    if (currentTheme === 'dark') {
-        icon.classList.replace('bi-moon-fill', 'bi-sun-fill');
-        darkModeToggle.textContent = ' Light Mode';
-        darkModeToggle.prepend(icon);
-    }
-    
-    // Toggle handler
+    // Apply initial theme
+    applyTheme(currentTheme);
+
+    // Theme toggle handler
     darkModeToggle.addEventListener('click', function() {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+        applyTheme(currentTheme);
+        localStorage.setItem('theme', currentTheme);
+    });
+
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
         
-        // Update theme
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        
-        // Update button
-        if (newTheme === 'dark') {
+        // Update button icon and text
+        if (theme === 'dark') {
             icon.classList.replace('bi-moon-fill', 'bi-sun-fill');
-            darkModeToggle.textContent = ' Light Mode';
+            darkModeToggle.innerHTML = '<i class="bi bi-sun-fill"></i> Light Mode';
         } else {
             icon.classList.replace('bi-sun-fill', 'bi-moon-fill');
-            darkModeToggle.textContent = ' Dark Mode';
+            darkModeToggle.innerHTML = '<i class="bi bi-moon-fill"></i> Dark Mode';
         }
-        darkModeToggle.prepend(icon);
-    });
-});
+        
+        // Update charts if they exist
+        updateChartsForTheme(theme);
+    }
 
-// Filter functionality
-document.querySelectorAll('[data-filter]').forEach(button => {
-    button.addEventListener('click', function() {
-        const filter = this.getAttribute('data-filter');
-        
-        // Update active button
-        document.querySelectorAll('[data-filter]').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        this.classList.add('active');
-        
-        // Show/hide cards
-        document.querySelectorAll('.filter-item').forEach(card => {
-            if (filter === 'all' || card.getAttribute('data-category') === filter) {
-                card.style.display = 'block';
-            } else {
-                card.style.display = 'none';
+    // =====================
+    // Filter Functionality
+    // =====================
+    const filterButtons = document.querySelectorAll('[data-filter]');
+    
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const filter = this.getAttribute('data-filter');
+            
+            // Update active button
+            filterButtons.forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.remove('bg-primary', 'text-white');
+            });
+            
+            this.classList.add('active');
+            if (this.classList.contains('nav-link')) {
+                this.classList.add('bg-primary', 'text-white');
             }
+            
+            // Filter cards
+            document.querySelectorAll('.filter-item').forEach(card => {
+                if (filter === 'all' || card.getAttribute('data-category') === filter) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
         });
     });
-});
 
-// Initialize charts when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    const powerCtx = document.getElementById('powerFlowChart')?.getContext('2d');
-    if (powerCtx) {
-        new Chart(powerCtx, {
-            type: 'line',
-            data: {
-                labels: ['-5m', '-4m', '-3m', '-2m', '-1m', 'Now'],
+    // =====================
+    // Chart Initialization
+    // =====================
+    let telemetryChart, powerFlowChart;
+    
+    function initCharts() {
+        // Power Flow Chart
+        const powerCtx = document.getElementById('powerFlowChart')?.getContext('2d');
+        if (powerCtx) {
+            powerFlowChart = new Chart(powerCtx, {
+                type: 'line',
+                data: getChartData('power'),
+                options: getChartOptions('Current (A)')
+            });
+        }
+        
+        // Telemetry Chart
+        const telemetryCtx = document.getElementById('telemetryChart')?.getContext('2d');
+        if (telemetryCtx) {
+            telemetryChart = new Chart(telemetryCtx, {
+                type: 'line',
+                data: getChartData('voltage'),
+                options: getChartOptions('Voltage (V)')
+            });
+        }
+        
+        // Chart theme update handler
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            const newTheme = e.matches ? 'dark' : 'light';
+            updateChartsForTheme(newTheme);
+        });
+    }
+    
+    function getChartData(type) {
+        const now = new Date();
+        const labels = Array.from({length: 24}, (_, i) => {
+            const d = new Date(now);
+            d.setHours(d.getHours() - 23 + i);
+            return d.getHours() + ':00';
+        });
+        
+        if (type === 'power') {
+            return {
+                labels: labels.slice(-6),
                 datasets: [
                     {
-                        label: 'Current Draw (A)',
+                        label: 'Current Draw',
                         data: [2.1, 2.3, 2.0, 2.2, 2.1, 2.0],
-                        borderColor: 'rgba(255, 99, 132, 1)',
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: '#e53e3e',
+                        backgroundColor: 'rgba(229, 62, 62, 0.2)',
                         tension: 0.1
                     },
                     {
-                        label: 'Generation (A)',
+                        label: 'Generation',
                         data: [2.5, 2.4, 2.6, 2.3, 2.5, 2.4],
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: '#38a169',
+                        backgroundColor: 'rgba(56, 161, 105, 0.2)',
                         tension: 0.1
                     }
                 ]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }
-
-    const telemetryCtx = document.getElementById('telemetryChart')?.getContext('2d');
-    if (telemetryCtx) {
-        const telemetryChart = new Chart(telemetryCtx, {
-            type: 'line',
-            data: {
-                labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+            };
+        } else {
+            return {
+                labels: labels,
                 datasets: [
                     {
-                        label: 'Battery Voltage (V)',
-                        data: [12.1, 12.0, 11.9, 11.8, 11.7, 11.6, 11.5, 11.4, 11.3, 11.2, 11.1, 11.0, 10.9, 10.8, 10.7, 10.6, 10.5, 10.4, 10.3, 10.2, 10.1, 10.0, 9.9, 9.8],
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        label: 'Battery Voltage',
+                        data: Array.from({length: 24}, (_, i) => 12 - (i * 0.1)),
+                        borderColor: '#3182ce',
+                        backgroundColor: 'rgba(49, 130, 206, 0.2)',
                         tension: 0.1
                     }
                 ]
+            };
+        }
+    }
+    
+    function getChartOptions(yLabel) {
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: 'var(--text-color)'
+                    }
+                }
             },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'top',
+            scales: {
+                x: {
+                    grid: {
+                        color: 'var(--chart-grid)'
+                    },
+                    ticks: {
+                        color: 'var(--chart-text)'
                     }
                 },
-                scales: {
-                    y: {
-                        beginAtZero: false
+                y: {
+                    beginAtZero: false,
+                    title: {
+                        display: true,
+                        text: yLabel,
+                        color: 'var(--chart-text)'
+                    },
+                    grid: {
+                        color: 'var(--chart-grid)'
+                    },
+                    ticks: {
+                        color: 'var(--chart-text)'
                     }
                 }
             }
-        });
-
-        // Update chart based on selection
-        document.getElementById('telemetry-select')?.addEventListener('change', function() {
-            const selected = this.value;
-            let newData;
-            
-            switch(selected) {
-                case 'temp':
-                    newData = {
-                        label: 'Temperature (°C)',
-                        data: [25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2],
-                        borderColor: 'rgba(255, 159, 64, 1)',
-                        backgroundColor: 'rgba(255, 159, 64, 0.2)'
-                    };
-                    break;
-                case 'comms':
-                    newData = {
-                        label: 'Signal Strength (%)',
-                        data: [95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72],
-                        borderColor: 'rgba(153, 102, 255, 1)',
-                        backgroundColor: 'rgba(153, 102, 255, 0.2)'
-                    };
-                    break;
-                case 'altitude':
-                    newData = {
-                        label: 'Altitude (km)',
-                        data: [10, 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 14, 14.5, 15, 15.5, 16, 16.5, 17, 17.5, 18, 18.5, 19, 19.5, 20, 20.5, 21, 21.5],
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)'
-                    };
-                    break;
-                default: // power
-                    newData = {
-                        label: 'Battery Voltage (V)',
-                        data: [12.1, 12.0, 11.9, 11.8, 11.7, 11.6, 11.5, 11.4, 11.3, 11.2, 11.1, 11.0, 10.9, 10.8, 10.7, 10.6, 10.5, 10.4, 10.3, 10.2, 10.1, 10.0, 9.9, 9.8],
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)'
-                    };
-            }
-            
-            telemetryChart.data.datasets[0] = newData;
-            telemetryChart.update();
-        });
+        };
     }
-
-    // Update time range
-    document.getElementById('time-range')?.addEventListener('input', function() {
-        const hours = this.value;
-        document.querySelector('.form-range + span').textContent = `Last ${hours} hours`;
-    });
-
-    // Simulate real-time updates
-    setInterval(() => {
-        const now = new Date();
-        const lastUpdateEl = document.getElementById('last-update');
-        if (lastUpdateEl) {
-            lastUpdateEl.textContent = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+    
+    function updateChartsForTheme(theme) {
+        const gridColor = theme === 'dark' ? '#333' : '#e9ecef';
+        const textColor = theme === 'dark' ? '#aaa' : '#495057';
+        
+        if (powerFlowChart) {
+            powerFlowChart.options.scales.x.grid.color = gridColor;
+            powerFlowChart.options.scales.y.grid.color = gridColor;
+            powerFlowChart.options.scales.x.ticks.color = textColor;
+            powerFlowChart.options.scales.y.ticks.color = textColor;
+            powerFlowChart.update();
         }
         
-        // Update random data for demo purposes
-        const batteryLevel = document.querySelector('.progress-bar.bg-success');
+        if (telemetryChart) {
+            telemetryChart.options.scales.x.grid.color = gridColor;
+            telemetryChart.options.scales.y.grid.color = gridColor;
+            telemetryChart.options.scales.x.ticks.color = textColor;
+            telemetryChart.options.scales.y.ticks.color = textColor;
+            telemetryChart.update();
+        }
+    }
+
+    // =====================
+    // Real-time Updates
+    // =====================
+    function updateLastUpdateTime() {
+        const now = new Date();
+        document.getElementById('last-update').textContent = 
+            now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+    }
+    
+    function simulateRealTimeUpdates() {
+        // Update battery level randomly
+        const batteryLevel = document.querySelector('.progress-bar');
         if (batteryLevel) {
-            const currentLevel = parseInt(batteryLevel.style.width);
-            const newLevel = Math.max(10, Math.min(100, currentLevel + (Math.random() * 2 - 1)));
+            const current = parseInt(batteryLevel.style.width || '100');
+            const newLevel = Math.max(10, Math.min(100, current + (Math.random() * 2 - 1)));
             batteryLevel.style.width = `${newLevel}%`;
             batteryLevel.textContent = `${Math.round(newLevel)}%`;
         }
-    }, 5000);
+        
+        // Add random log entry
+        const logMessages = [
+            'Telemetry packet received',
+            'Attitude adjustment complete',
+            'Solar panels generating power',
+            'Iridium connection established',
+            'Battery temperature warning',
+            'Navigation system calibrating',
+            'Payload interface active'
+        ];
+        
+        const logContainer = document.querySelector('.command-history');
+        if (logContainer) {
+            const now = new Date();
+            const newLog = document.createElement('div');
+            newLog.className = 'mb-2';
+            newLog.innerHTML = `
+                <small class="text-muted">${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} UTC</small>
+                <div>${logMessages[Math.floor(Math.random() * logMessages.length)]}</div>
+            `;
+            logContainer.prepend(newLog);
+            if (logContainer.children.length > 5) {
+                logContainer.removeChild(logContainer.lastChild);
+            }
+        }
+        
+        updateLastUpdateTime();
+    }
+
+    // =====================
+    // Initialization
+    // =====================
+    initCharts();
+    updateLastUpdateTime();
+    setInterval(simulateRealTimeUpdates, 5000);
+    
+    // Initialize with 'All' filter active
+    document.querySelector('[data-filter="all"]').click();
 });

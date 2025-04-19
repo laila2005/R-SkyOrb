@@ -1,33 +1,39 @@
 :root {
-  /* Light mode colors */
+  /* Light Mode Colors */
   --bg-color: #f8f9fa;
   --text-color: #212529;
   --card-bg: #ffffff;
   --card-border: rgba(0, 0, 0, 0.125);
   --header-bg: #212529;
   --header-text: #ffffff;
-  
-  /* Component colors */
+  --success: #198754;
+  --warning: #ffc107;
+  --danger: #dc3545;
   --primary: #0d6efd;
   --secondary: #6c757d;
-  --success: #198754;
-  --danger: #dc3545;
-  --warning: #ffc107;
-  --info: #0dcaf0;
+  --chart-grid: #e9ecef;
+  --chart-text: #495057;
+  --search-bg: #ffffff;
+  --network-bg: #f8f9fa;
 }
 
 [data-theme="dark"] {
-  /* Dark mode colors */
+  /* Dark Mode Colors */
   --bg-color: #121212;
-  --text-color: #f8f9fa;
+  --text-color: #e0e0e0;
   --card-bg: #1e1e1e;
   --card-border: #333;
-  --header-bg: #1a1a1a;
+  --header-bg: #0d0d0d;
   --header-text: #ffffff;
-  
-  /* Adjusted component colors */
+  --success: #4CAF50;
+  --warning: #FFC107;
+  --danger: #F44336;
   --primary: #3a86ff;
-  --secondary: #6c757d;
+  --secondary: #555;
+  --chart-grid: #333;
+  --chart-text: #aaa;
+  --search-bg: #2d2d2d;
+  --network-bg: #252525;
 }
 
 /* Base Styles */
@@ -35,7 +41,7 @@ body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: var(--bg-color);
   color: var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.5s ease, color 0.5s ease;
 }
 
 /* Header Styles */
@@ -44,9 +50,10 @@ body {
   color: var(--header-text);
   padding: 1rem;
   margin-bottom: 1rem;
+  transition: background-color 0.5s ease;
 }
 
-/* Dark Mode Toggle Button */
+/* Dark Mode Toggle */
 #darkModeToggle {
   background-color: white;
   color: black;
@@ -78,9 +85,10 @@ body {
 .card {
   margin-bottom: 1rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, background-color 0.3s ease, border-color 0.3s ease;
+  transition: all 0.3s ease;
   background-color: var(--card-bg);
   border: 1px solid var(--card-border);
+  color: var(--text-color);
 }
 
 .card-header {
@@ -110,7 +118,31 @@ body {
   background-color: var(--danger);
 }
 
-/* Thermal Management Styles */
+/* Charts and Graphs */
+.telemetry-graph {
+  background-color: var(--card-bg);
+}
+
+.chart-container {
+  position: relative;
+  height: 200px;
+  width: 100%;
+}
+
+[data-theme="dark"] .chartjs-render-monitor {
+  filter: brightness(0.8) contrast(1.2);
+}
+
+/* Progress Bars */
+.progress {
+  background-color: var(--chart-grid);
+}
+
+.progress-bar {
+  transition: width 0.6s ease, background-color 0.5s ease;
+}
+
+/* Thermal Visualization */
 .thermal-visualization {
   height: 200px;
   position: relative;
@@ -125,27 +157,88 @@ body {
   margin: 0 auto;
 }
 
-/* Dark Mode Specific Adjustments */
-[data-theme="dark"] {
-  .temperature-bar {
-    box-shadow: 0 0 0 1px #333;
-  }
-  
-  .alert-warning {
-    background-color: #332b00;
-    border-color: #665600;
-    color: #ffd700;
-  }
-  
-  .filter-controls {
-    background-color: var(--card-bg);
-  }
+/* Navigation Components */
+.compass {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 2px solid var(--secondary);
+  position: relative;
+  margin: 0 auto;
+}
+
+/* Form Elements */
+input[type="search"] {
+  background-color: var(--search-bg);
+  color: var(--text-color);
+  border: 1px solid var(--card-border);
+  transition: all 0.3s ease;
+}
+
+/* Network Status */
+.network-status {
+  background-color: var(--network-bg);
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+
+/* Alerts and Warnings */
+.alert {
+  border-width: 1px;
+  transition: all 0.3s ease;
+}
+
+.alert-warning {
+  background-color: rgba(255, 193, 7, 0.2);
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+[data-theme="dark"] .alert-warning {
+  background-color: #332b00;
+  border-color: #665600;
+  color: #ffd700;
+}
+
+/* Tables */
+table {
+  color: var(--text-color);
+  width: 100%;
+}
+
+th, td {
+  border-bottom: 1px solid var(--card-border);
+  padding: 0.75rem;
+}
+
+/* Utility Classes */
+.text-muted {
+  color: var(--secondary) !important;
+}
+
+.badge.bg-secondary {
+  background-color: var(--secondary) !important;
+  color: white !important;
 }
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {
+  .card {
+    margin-bottom: 0.75rem;
+  }
+  
+  .compass {
+    width: 120px;
+    height: 120px;
+  }
+  
   #darkModeToggle {
     padding: 0.2rem 0.4rem;
     font-size: 0.8rem;
   }
+}
+
+/* Smooth Transitions */
+body, .card, .navbar, .badge, .progress-bar, .alert, input {
+  transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
 }
