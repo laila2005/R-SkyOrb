@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R-SkyOrb Mission Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary: #0d6efd;
+            --secondary: #6c757d;
+            --success: #198754;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #0dcaf0;
+            --dark: #212529;
+            --light: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .dashboard-header {
+            background-color: var(--dark);
+            color: white;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .card {
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            font-weight: bold;
+            background-color: rgba(13, 110, 253, 0.1);
+        }
+        
+        .status-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        
+        .status-green {
+            background-color: var(--success);
+        }
+        
+        .status-yellow {
+            background-color: var(--warning);
+        }
+        
+        .status-red {
+            background-color: var(--danger);
+        }
+        
+        .gauge {
+            height: 120px;
+            position: relative;
+        }
+        
+        .telemetry-graph {
+            height: 200px;
+        }
+        
+        .compass {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 2px solid var(--secondary);
+            position: relative;
+            margin: 0 auto;
+        }
+        
+        .compass-arrow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 50px solid var(--danger);
+            transform-origin: bottom center;
+            transform: translate(-50%, -50%) rotate(0deg);
+        }
+        
+        .filter-controls {
+            background-color: white;
+            padding: 1rem;
+            border-radius: 0.25rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .log-entry {
+            padding: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .log-entry.warning {
+            background-color: rgba(255, 193, 7, 0.1);
+        }
+        
+        .log-entry.error {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+        
+        .command-history {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .temperature-indicator {
+            height: 100px;
+            width: 20px;
+            background: linear-gradient(to top, blue, green, yellow, red);
+            position: relative;
+        }
+        
+        .temperature-marker {
+            position: absolute;
+            width: 30px;
+            left: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1><i class="bi bi-rocket"></i> R-SkyOrb Mission Dashboard</h1>
+                </div>
+                <div class="col-md-6 text-end">
+                    <span class="badge bg-secondary">Last Update: <span id="last-update">2023-07-20 14:30:45 UTC</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container-fluid">
+        <!-- Filter Controls -->
+        <div class="filter-controls">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary active" data-filter="all">All</button>
+                        <button type="button" class="btn btn-outline-primary" data-filter="power"><i class="bi bi-battery-full"></i> Power</button>
+                        <button type="button" class="btn btn-outline-primary" data-filter="comms"><i class="bi bi-wifi"></i> Comms</button>
+                        <button type="button" class="btn btn-outline-primary" data-filter="nav"><i class="bi bi-compass"></i> Navigation</button>
+                        <button type="button" class="btn btn-outline-primary" data-filter="thermal"><i class="bi bi-thermometer-half"></i> Thermal</button>
+                        <button type="button" class="btn btn-outline-primary" data-filter="telemetry"><i class="bi bi-graph-up"></i> Telemetry</button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search...">
+                        <button class="btn btn-outline-secondary" type="button"><i class="bi bi-search"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- Subsystem Status Overview -->
+            <div class="col-md-4 filter-item" data-category="all">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-clipboard2-pulse"></i> Subsystem Status Overview
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <td><span class="status-indicator status-green"></span> Power System</td>
+                                    <td class="text-end">Nominal</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="status-indicator status-green"></span> Communication</td>
+                                    <td class="text-end">Connected</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="status-indicator status-yellow"></span> Navigation</td>
+                                    <td class="text-end">Calibrating</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="status-indicator status-green"></span> Thermal Control</td>
+                                    <td class="text-end">Stable</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="status-indicator status-green"></span> Payload Interface</td>
+                                    <td class="text-end">Active</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="status-indicator status-red"></span> Balloon System</td>
+                                    <td class="text-end">Not Detected</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <small class="text-muted">Last health check: <span id="health-check-time">2023-07-20 14:30:40 UTC</span></small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Power Subsystem -->
+            <div class="col-md-4 filter-item" data-category="power">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-battery-full"></i> Power Subsystem
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Battery Level</h6>
+                                <div class="progress" style="height: 30px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 78%;" aria-valuenow="78" aria-valuemin="0" aria-valuemax="100">78%</div>
+                                </div>
+                                <small class="text-muted">Estimated runtime: 4h 22m</small>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Solar Panels</h6>
+                                <div>
+                                    <span class="badge bg-success"><i class="bi bi-sun"></i> Active</span>
+                                </div>
+                                <small class="text-muted">Generating 45W</small>
+                            </div>
+                        </div>
+                        <hr>
+                        <h6>Power Flow</h6>
+                        <canvas id="powerFlowChart" class="telemetry-graph"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Communication Subsystem -->
+            <div class="col-md-4 filter-item" data-category="comms">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-wifi"></i> Communication Subsystem
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Signal Strength</h6>
+                                <div class="d-flex align-items-end" style="height: 100px;">
+                                    <div class="me-1 bg-primary" style="width: 15px; height: 20%;"></div>
+                                    <div class="me-1 bg-primary" style="width: 15px; height: 40%;"></div>
+                                    <div class="me-1 bg-primary" style="width: 15px; height: 60%;"></div>
+                                    <div class="me-1 bg-primary" style="width: 15px; height: 80%;"></div>
+                                    <div class="bg-secondary" style="width: 15px; height: 30%;"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Data Rates</h6>
+                                <div><strong>Uplink:</strong> 2.4 kbps</div>
+                                <div><strong>Downlink:</strong> 4.8 kbps</div>
+                                <div class="mt-2">
+                                    <span class="badge bg-info">Iridium Network</span>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div>
+                            <h6>Last Message</h6>
+                            <div><strong>Time:</strong> 2023-07-20 14:30:42 UTC</div>
+                            <div><strong>Integrity:</strong> <span class="badge bg-success">100%</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Navigation & Control -->
+            <div class="col-md-4 filter-item" data-category="nav">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-compass"></i> Navigation & Control
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 text-center">
+                                <h6>Orientation</h6>
+                                <div class="compass">
+                                    <div class="compass-arrow" style="transform: translate(-50%, -50%) rotate(45deg);"></div>
+                                </div>
+                                <div class="mt-2">Heading: 45° NE</div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Position</h6>
+                                <div><strong>Lat:</strong> 30.0444° N</div>
+                                <div><strong>Lon:</strong> 31.2357° E</div>
+                                <div><strong>Alt:</strong> 35,000 ft</div>
+                                <div class="mt-2">
+                                    <span class="badge bg-info">Above Cairo, Egypt</span>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <h6>Trajectory</h6>
+                        <div id="miniMap" style="height: 150px; background-color: #eee; border-radius: 4px;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Thermal Management -->
+            <div class="col-md-4 filter-item" data-category="thermal">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-thermometer-half"></i> Thermal Management
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Module Temperatures</h6>
+                                <div class="temperature-indicator">
+                                    <div class="temperature-marker" style="top: 10%;">Avionics: 25°C</div>
+                                    <div class="temperature-marker" style="top: 30%;">Payload: 15°C</div>
+                                    <div class="temperature-marker" style="top: 60%;">Battery: -10°C</div>
+                                    <div class="temperature-marker" style="top: 80%;">External: -45°C</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Cooling System</h6>
+                                <div class="mb-2">
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Status:</strong> Normal operation
+                                </div>
+                                <div class="alert alert-warning py-1">
+                                    <small><i class="bi bi-exclamation-triangle"></i> Battery temp approaching lower limit</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Live Telemetry Graphs -->
+            <div class="col-md-8 filter-item" data-category="telemetry">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-graph-up"></i> Live Telemetry Graphs
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <select class="form-select" id="telemetry-select">
+                                    <option value="power">Power Metrics</option>
+                                    <option value="temp">Temperature</option>
+                                    <option value="comms">Communication</option>
+                                    <option value="altitude">Altitude</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="d-flex align-items-center">
+                                    <input type="range" class="form-range" id="time-range" min="1" max="24" value="6">
+                                    <span class="ms-2">Last 6 hours</span>
+                                </div>
+                            </div>
+                        </div>
+                        <canvas id="telemetryChart" class="telemetry-graph"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- System Logs / Events Feed -->
+            <div class="col-md-4 filter-item" data-category="all">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-list-check"></i> System Logs / Events Feed
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="p-2 bg-light border-bottom">
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" placeholder="Filter logs...">
+                                <button class="btn btn-outline-secondary" type="button"><i class="bi bi-funnel"></i></button>
+                            </div>
+                        </div>
+                        <div style="height: 300px; overflow-y: auto;">
+                            <div class="log-entry">
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">14:30:45 UTC</small>
+                                    <span class="badge bg-info">INFO</span>
+                                </div>
+                                <div>Telemetry packet received</div>
+                            </div>
+                            <div class="log-entry warning">
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">14:28:32 UTC</small>
+                                    <span class="badge bg-warning">WARN</span>
+                                </div>
+                                <div>Battery temperature approaching lower limit</div>
+                            </div>
+                            <div class="log-entry">
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">14:25:18 UTC</small>
+                                    <span class="badge bg-info">INFO</span>
+                                </div>
+                                <div>Attitude adjustment complete</div>
+                            </div>
+                            <div class="log-entry">
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">14:22:05 UTC</small>
+                                    <span class="badge bg-info">INFO</span>
+                                </div>
+                                <div>Solar panels generating 45W</div>
+                            </div>
+                            <div class="log-entry error">
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">14:20:51 UTC</small>
+                                    <span class="badge bg-danger">ERROR</span>
+                                </div>
+                                <div>Balloon system not detected</div>
+                            </div>
+                            <div class="log-entry">
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">14:18:37 UTC</small>
+                                    <span class="badge bg-info">INFO</span>
+                                </div>
+                                <div>Iridium connection established</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Diagnostics -->
+            <div class="col-md-4 filter-item" data-category="all">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-clipboard2-pulse"></i> Diagnostics
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h6>System Health Score</h6>
+                            <div class="progress" style="height: 30px;">
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: 82%;" aria-valuenow="82" aria-valuemin="0" aria-valuemax="100">82/100</div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <h6>Self-Check Status</h6>
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr>
+                                        <td>Power System</td>
+                                        <td class="text-end"><span class="badge bg-success">Pass</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Communication</td>
+                                        <td class="text-end"><span class="badge bg-success">Pass</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Navigation</td>
+                                        <td class="text-end"><span class="badge bg-warning">Warning</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Thermal Control</td>
+                                        <td class="text-end"><span class="badge bg-success">Pass</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bi bi-arrow-repeat"></i> Run Full Diagnostic
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Resource Usage -->
+            <div class="col-md-4 filter-item" data-category="all">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-speedometer2"></i> Resource Usage
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>CPU/Memory</h6>
+                                <div class="mb-2">
+                                    <small>CPU Usage</small>
+                                    <div class="progress" style="height: 10px;">
+                                        <div class="progress-bar bg-info" role="progressbar" style="width: 45%;" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <small>Memory Usage</small>
+                                    <div class="progress" style="height: 10px;">
+                                        <div class="progress-bar bg-info" role="progressbar" style="width: 68%;" aria-valuenow="68" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Data</h6>
+                                <div class="mb-2">
+                                    <small>Data Transmitted</small>
+                                    <div>4.2 MB</div>
+                                </div>
+                                <div class="mb-2">
+                                    <small>Data Received</small>
+                                    <div>2.7 MB</div>
+                                </div>
+                                <div class="mb-2">
+                                    <small>Log Size</small>
+                                    <div>1.5 MB</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Manual Commands Panel (Admin Only) -->
+            <div class="col-md-4 filter-item" data-category="all">
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <i class="bi bi-terminal"></i> Manual Commands Panel <span class="badge bg-light text-danger">Admin Only</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-sm btn-outline-secondary">Reset Power Module</button>
+                            <button class="btn btn-sm btn-outline-secondary">Ping Communication</button>
+                            <button class="btn btn-sm btn-outline-secondary">Run Diagnostics</button>
+                            <button class="btn btn-sm btn-outline-secondary">Calibrate Sensors</button>
+                            <button class="btn btn-sm btn-outline-danger">Emergency Stop</button>
+                        </div>
+                        <hr>
+                        <h6>Command History</h6>
+                        <div class="command-history">
+                            <div class="mb-2">
+                                <small class="text-muted">14:25:18 UTC</small>
+                                <div>Sent: Sensor calibration request</div>
+                                <div>Response: Calibration initiated</div>
+                            </div>
+                            <div class="mb-2">
+                                <small class="text-muted">14:20:51 UTC</small>
+                                <div>Sent: System status query</div>
+                                <div>Response: Status report received</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Configurable System Controls -->
+            <div class="col-md-4 filter-item" data-category="all">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-gear"></i> Configurable System Controls
+                    </div>
+                    <div class="card-body">
+                        <h6>Threshold Settings</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Temperature Alert Threshold</label>
+                            <input type="range" class="form-range" min="-50" max="50" value="40">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Battery Warning Level</label>
+                            <input type="range" class="form-range" min="10" max="90" value="20">
+                        </div>
+                        <hr>
+                        <h6>Notification Preferences</h6>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="notify-errors" checked>
+                            <label class="form-check-label" for="notify-errors">Error Alerts</label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="notify-warnings" checked>
+                            <label class="form-check-label" for="notify-warnings">Warning Alerts</label>
+                        </div>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button class="btn btn-sm btn-outline-primary">Save Preset</button>
+                            <button class="btn btn-sm btn-outline-secondary">Load Preset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
