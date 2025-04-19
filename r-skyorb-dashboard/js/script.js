@@ -1,3 +1,40 @@
+// dark mode switch
+document.addEventListener('DOMContentLoaded', function() {
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const icon = darkModeToggle.querySelector('i');
+    
+    // Check for saved preference
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    
+    // Update button state
+    if (currentTheme === 'dark') {
+        icon.classList.replace('bi-moon-fill', 'bi-sun-fill');
+        darkModeToggle.textContent = ' Light Mode';
+        darkModeToggle.prepend(icon);
+    }
+    
+    // Toggle handler
+    darkModeToggle.addEventListener('click', function() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        // Update theme
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        // Update button
+        if (newTheme === 'dark') {
+            icon.classList.replace('bi-moon-fill', 'bi-sun-fill');
+            darkModeToggle.textContent = ' Light Mode';
+        } else {
+            icon.classList.replace('bi-sun-fill', 'bi-moon-fill');
+            darkModeToggle.textContent = ' Dark Mode';
+        }
+        darkModeToggle.prepend(icon);
+    });
+});
+
 // Filter functionality
 document.querySelectorAll('[data-filter]').forEach(button => {
     button.addEventListener('click', function() {

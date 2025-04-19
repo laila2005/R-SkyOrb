@@ -1,41 +1,95 @@
 :root {
+  /* Light mode colors */
+  --bg-color: #f8f9fa;
+  --text-color: #212529;
+  --card-bg: #ffffff;
+  --card-border: rgba(0, 0, 0, 0.125);
+  --header-bg: #212529;
+  --header-text: #ffffff;
+  
+  /* Component colors */
   --primary: #0d6efd;
   --secondary: #6c757d;
   --success: #198754;
   --danger: #dc3545;
   --warning: #ffc107;
   --info: #0dcaf0;
-  --dark: #212529;
-  --light: #f8f9fa;
 }
 
+[data-theme="dark"] {
+  /* Dark mode colors */
+  --bg-color: #121212;
+  --text-color: #f8f9fa;
+  --card-bg: #1e1e1e;
+  --card-border: #333;
+  --header-bg: #1a1a1a;
+  --header-text: #ffffff;
+  
+  /* Adjusted component colors */
+  --primary: #3a86ff;
+  --secondary: #6c757d;
+}
+
+/* Base Styles */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f5f5f5;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Header Styles */
 .dashboard-header {
-  background-color: var(--dark);
-  color: white;
+  background-color: var(--header-bg);
+  color: var(--header-text);
   padding: 1rem;
   margin-bottom: 1rem;
 }
 
+/* Dark Mode Toggle Button */
+#darkModeToggle {
+  background-color: white;
+  color: black;
+  border: 1px solid black;
+  transition: all 0.3s ease;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#darkModeToggle:hover {
+  background-color: black;
+  color: white;
+}
+
+[data-theme="dark"] #darkModeToggle {
+  background-color: black;
+  color: white;
+  border: 1px solid white;
+}
+
+[data-theme="dark"] #darkModeToggle:hover {
+  background-color: white;
+  color: black;
+}
+
+/* Card Styles */
 .card {
   margin-bottom: 1rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
-}
-
-.card:hover {
-  transform: translateY(-5px);
+  transition: transform 0.2s, background-color 0.3s ease, border-color 0.3s ease;
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
 }
 
 .card-header {
   font-weight: bold;
-  background-color: rgba(13, 110, 253, 0.1);
+  background-color: rgba(var(--primary), 0.1);
+  border-bottom: 1px solid var(--card-border);
 }
 
+/* Status Indicators */
 .status-indicator {
   width: 15px;
   height: 15px;
@@ -56,72 +110,42 @@ body {
   background-color: var(--danger);
 }
 
-.gauge {
-  height: 120px;
+/* Thermal Management Styles */
+.thermal-visualization {
+  height: 200px;
   position: relative;
 }
 
-.telemetry-graph {
-  height: 200px;
-}
-
-.compass {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  border: 2px solid var(--secondary);
+.temperature-bar {
+  width: 30px;
+  height: 100%;
+  background: linear-gradient(to top, #3182CE, #38A169, #DD6B20, #E53E3E);
+  border-radius: 4px;
   position: relative;
   margin: 0 auto;
 }
 
-.compass-arrow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-bottom: 50px solid var(--danger);
-  transform-origin: bottom center;
-  transform: translate(-50%, -50%) rotate(0deg);
+/* Dark Mode Specific Adjustments */
+[data-theme="dark"] {
+  .temperature-bar {
+    box-shadow: 0 0 0 1px #333;
+  }
+  
+  .alert-warning {
+    background-color: #332b00;
+    border-color: #665600;
+    color: #ffd700;
+  }
+  
+  .filter-controls {
+    background-color: var(--card-bg);
+  }
 }
 
-.filter-controls {
-  background-color: white;
-  padding: 1rem;
-  border-radius: 0.25rem;
-  margin-bottom: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.log-entry {
-  padding: 0.5rem;
-  border-bottom: 1px solid #eee;
-}
-
-.log-entry.warning {
-  background-color: rgba(255, 193, 7, 0.1);
-}
-
-.log-entry.error {
-  background-color: rgba(220, 53, 69, 0.1);
-}
-
-.command-history {
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.temperature-indicator {
-  height: 100px;
-  width: 20px;
-  background: linear-gradient(to top, blue, green, yellow, red);
-  position: relative;
-}
-
-.temperature-marker {
-  position: absolute;
-  width: 30px;
-  left: 25px;
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  #darkModeToggle {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.8rem;
+  }
 }
