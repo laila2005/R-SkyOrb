@@ -20,79 +20,36 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('theme', currentTheme);
     });
 
-    applyTheme(currentTheme);
-
-    // =====================
-    // Filter Functionality
-    // =====================
-    const filterButtons = document.querySelectorAll('[data-filter]');
-    
-    filterButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            filterButtons.forEach(btn => {
-                btn.classList.remove('active');
-                btn.classList.add('btn-outline-primary');
-            });
-            this.classList.add('active');
-            this.classList.remove('btn-outline-primary');
-            
-            const filter = this.getAttribute('data-filter');
-            document.querySelectorAll('.filter-item').forEach(card => {
-                card.style.display = (filter === 'all' || card.getAttribute('data-category') === filter) ? 'block' : 'none';
-            });
-        });
-    });
-
-    // =====================
-    // Search Functionality
-    // =====================
-    const searchInput = document.getElementById('search-input');
-    const searchBtn = document.getElementById('search-btn');
-    
-    searchBtn.addEventListener('click', () => {
-        const query = searchInput.value.toLowerCase();
-        document.querySelectorAll('.card').forEach(card => {
-            const text = card.textContent.toLowerCase();
-            card.parentElement.style.display = text.includes(query) ? 'block' : 'none';
-        });
-    });
-
-    // =====================
-    // Log Filter Functionality
-    // =====================
-    const logFilterInput = document.getElementById('log-filter-input');
-    const logFilterBtn = document.getElementById('log-filter-btn');
-    
-    logFilterBtn.addEventListener('click', () => {
-        const query = logFilterInput.value.toLowerCase();
-        document.querySelectorAll('.log-entry').forEach(entry => {
-            const text = entry.textContent.toLowerCase();
-            entry.style.display = text.includes(query) ? 'block' : 'none';
-        });
-    });
-
     // =====================
     // Chart Management
     // =====================
     let telemetryChart, powerFlowChart;
     
     function initCharts() {
-        const powerCtx = document.getElementById('powerFlowChart')?.getContext('2d');
-        if (powerCtx) {
-            powerFlowChart = new Chart(powerCtx, {
-                type: 'line',
-                data: getChartData('power'),
-                options: getChartOptions('Current (A)')
-            });
-        }
-        
-        const telemetryCtx = document.getElementById('telemetryChart')?.getContext('2d');
-        if (telemetryCtx) {
-            telemetryChart = new Chart(telemetryCtx, {
-                type: 'line',
-                data: getChartData('voltage'),
-                options: getChartOptions('Voltage (V)')
-            });
+        try {
+            const powerCtx = document.getElementById('powerFlowChart')?.getContext('2d');
+            if (powerCtx) {
+                powerFlowChart = new Chart(powerCtx, {
+                    type: 'line',
+                    data: getChartData('power'),
+                    options: getChartOptions('Current (A)')
+                });
+            } else {
+                console.error('Power Flow Chart canvas not found');
+            }
+            
+            const telemetryCtx = document.getElementById('telemetryChart')?.getContext('2d');
+            if (telemetryCtx) {
+                telemetryChart = new Chart(telemetryCtx, {
+                    type: 'line',
+                    data: getChartData('voltage'),
+                    options: getChartOptions('Voltage (V)')
+                });
+            } else {
+                console.error('Telemetry Chart canvas not found');
+            }
+        } catch (error) {
+            console.error('Error initializing charts:', error);
         }
     }
     
@@ -184,6 +141,64 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Initialize charts before applying theme
+    initCharts();
+    applyTheme(currentTheme);
+
+    // =====================
+    // Filter Functionality
+    // =====================
+    const filterButtons = document.querySelectorAll('[data-filter]');
+    
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const filter = this.getAttribute('data-filter');
+            console.log('Applying filter:', filter); // Debug log
+            
+            // Update button states
+            filterButtons.forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('btn-outline-primary');
+            });
+            this.classList.add('active');
+            this.classList.remove('btn-outline-primary');
+            
+            // Filter widgets
+            document.querySelectorAll('.filter-item').forEach(item => {
+                const categories = item.getAttribute('data-category').split(' ');
+                item.style.display = (filter === 'all' || categories.includes(filter)) ? 'block' : 'none';
+            });
+        });
+    });
+
+    // =====================
+    // Search Functionality
+    // =====================
+    const searchInput = document.getElementById('search-input');
+    const searchBtn = document.getElementById('search-btn');
+    
+    searchBtn.addEventListener('click', () => {
+        const query = searchInput.value.toLowerCase();
+        document.querySelectorAll('.card').forEach(card => {
+            const text = card.textContent.toLowerCase();
+            card.parentElement.style.display = text.includes(query) ? 'block' : 'none';
+        });
+    });
+
+    // =====================
+    // Log Filter Functionality
+    // =====================
+    const logFilterInput = document.getElementById('log-filter-input');
+    const logFilterBtn = document.getElementById('log-filter-btn');
+    
+    logFilterBtn.addEventListener('click', () => {
+        const query = logFilterInput.value.toLowerCase();
+        document.querySelectorAll('.log-entry').forEach(entry => {
+            const text = entry.textContent.toLowerCase();
+            entry.style.display = text.includes(query) ? 'block' : 'none';
+        });
+    });
 
     // =====================
     // Telemetry Controls
@@ -352,7 +367,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // =====================
     // Initialization
     // =====================
-    initCharts();
     initMiniMap();
     updateLastUpdateTime();
     setInterval(simulateRealTimeUpdates, 5000);

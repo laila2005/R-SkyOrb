@@ -116,11 +116,13 @@ body {
 /* Charts and Graphs */
 .telemetry-graph {
   background-color: var(--card-bg);
+  width: 100%;
+  height: 100%;
 }
 
 .chart-container {
   position: relative;
-  height: 250px;
+  min-height: 250px;
   width: 100%;
 }
 
@@ -220,11 +222,12 @@ th, td {
 .btn-group .btn.active {
   background-color: var(--primary);
   color: #fff;
+  border-color: var(--primary);
 }
 
 /* Log Entries */
 .log-entry {
-  padding: 0.75rem;
+  padding: 1rem;
   border-bottom: 1px solid var(--card-border);
 }
 
@@ -262,7 +265,7 @@ th, td {
   }
   
   .chart-container {
-    height: 200px;
+    min-height: 200px;
   }
   
   #darkModeToggle {
