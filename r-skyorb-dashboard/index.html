@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>R-SkyOrb Mission Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="css/style.css">
-        
 </head>
 <body>
     <div class="dashboard-header">
@@ -17,8 +16,7 @@
                     <h1><i class="bi bi-rocket"></i> R-SkyOrb Mission Dashboard</h1>
                 </div>
                 <div class="col-md-6 text-end">
-                    <span class="badge bg-secondary">Last Update: <span id="last-update">2023-07-20 14:30:45 UTC</span></span>
-		    <!-- Dark Mode Toggle should be INSIDE this column -->
+                    <span class="badge bg-secondary">Last Update: <span id="last-update">2025-04-22 12:00:00 UTC</span></span>
                     <button id="darkModeToggle" class="btn btn-sm ms-2">
                         <i class="bi bi-moon-fill"></i> Dark Mode
                     </button>
@@ -29,22 +27,22 @@
     
     <div class="container-fluid">
         <!-- Filter Controls -->
-        <div class="filter-controls">
+        <div class="filter-controls mb-4">
             <div class="row">
                 <div class="col-md-8">
                     <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-outline-primary active" data-filter="all">All</button>
-                        <button type="button" class="btn btn-outline-primary" data-filter="power"><i class="bi bi-battery-full"></i> Power</button>
-                        <button type="button" class="btn btn-outline-primary" data-filter="comms"><i class="bi bi-wifi"></i> Comms</button>
-                        <button type="button" class="btn btn-outline-primary" data-filter="nav"><i class="bi bi-compass"></i> Navigation</button>
-                        <button type="button" class="btn btn-outline-primary" data-filter="thermal"><i class="bi bi-thermometer-half"></i> Thermal</button>
-                        <button type="button" class="btn btn-outline-primary" data-filter="telemetry"><i class="bi bi-graph-up"></i> Telemetry</button>
+                        <button type="button" class="btn btn-outline-primary active" data-filter="all" id="filter-all">All</button>
+                        <button type="button" class="btn btn-outline-primary" data-filter="power" id="filter-power"><i class="bi bi-battery-full"></i> Power</button>
+                        <button type="button" class="btn btn-outline-primary" data-filter="comms" id="filter-comms"><i class="bi bi-wifi"></i> Comms</button>
+                        <button type="button" class="btn btn-outline-primary" data-filter="nav" id="filter-nav"><i class="bi bi-compass"></i> Navigation</button>
+                        <button type="button" class="btn btn-outline-primary" data-filter="thermal" id="filter-thermal"><i class="bi bi-thermometer-half"></i> Thermal</button>
+                        <button type="button" class="btn btn-outline-primary" data-filter="telemetry" id="filter-telemetry"><i class="bi bi-graph-up"></i> Telemetry</button>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="input-group">
-                        <input type="text" class="form-control" placeholder="Search...">
-                        <button class="btn btn-outline-secondary" type="button"><i class="bi bi-search"></i></button>
+                        <input type="text" class="form-control" placeholder="Search..." id="search-input">
+                        <button class="btn btn-outline-secondary" type="button" id="search-btn"><i class="bi bi-search"></i></button>
                     </div>
                 </div>
             </div>
@@ -86,7 +84,7 @@
                                 </tr>
                             </tbody>
                         </table>
-                        <small class="text-muted">Last health check: <span id="health-check-time">2023-07-20 14:30:40 UTC</span></small>
+                        <small class="text-muted">Last health check: <span id="health-check-time">2025-04-22 12:00:00 UTC</span></small>
                     </div>
                 </div>
             </div>
@@ -116,7 +114,9 @@
                         </div>
                         <hr>
                         <h6>Power Flow</h6>
-                        <canvas id="powerFlowChart" class="telemetry-graph"></canvas>
+                        <div class="chart-container">
+                            <canvas id="powerFlowChart" class="telemetry-graph"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -151,7 +151,7 @@
                         <hr>
                         <div>
                             <h6>Last Message</h6>
-                            <div><strong>Time:</strong> 2023-07-20 14:30:42 UTC</div>
+                            <div><strong>Time:</strong> 2025-04-22 12:00:00 UTC</div>
                             <div><strong>Integrity:</strong> <span class="badge bg-success">100%</span></div>
                         </div>
                     </div>
@@ -171,6 +171,7 @@
                                 <div class="compass">
                                     <div class="compass-arrow" style="transform: translate(-50%, -50%) rotate(45deg);"></div>
                                 </div>
+                               EXTRA_CODE
                                 <div class="mt-2">Heading: 45° NE</div>
                             </div>
                             <div class="col-md-6">
@@ -243,11 +244,13 @@
                             <div class="col-md-8">
                                 <div class="d-flex align-items-center">
                                     <input type="range" class="form-range" id="time-range" min="1" max="24" value="6">
-                                    <span class="ms-2">Last 6 hours</span>
+                                    <span class="ms-2" id="time-range-label">Last 6 hours</span>
                                 </div>
                             </div>
                         </div>
-                        <canvas id="telemetryChart" class="telemetry-graph"></canvas>
+                        <div class="chart-container">
+                            <canvas id="telemetryChart" class="telemetry-graph"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -261,49 +264,49 @@
                     <div class="card-body p-0">
                         <div class="p-2 bg-light border-bottom">
                             <div class="input-group input-group-sm">
-                                <input type="text" class="form-control" placeholder="Filter logs...">
-                                <button class="btn btn-outline-secondary" type="button"><i class="bi bi-funnel"></i></button>
+                                <input type="text" class="form-control" placeholder="Filter logs..." id="log-filter-input">
+                                <button class="btn btn-outline-secondary" type="button" id="log-filter-btn"><i class="bi bi-funnel"></i></button>
                             </div>
                         </div>
-                        <div style="height: 300px; overflow-y: auto;">
+                        <div class="log-container" style="height: 300px; overflow-y: auto;">
                             <div class="log-entry">
                                 <div class="d-flex justify-content-between">
-                                    <small class="text-muted">14:30:45 UTC</small>
+                                    <small class="text-muted">12:00:00 UTC</small>
                                     <span class="badge bg-info">INFO</span>
                                 </div>
                                 <div>Telemetry packet received</div>
                             </div>
                             <div class="log-entry warning">
                                 <div class="d-flex justify-content-between">
-                                    <small class="text-muted">14:28:32 UTC</small>
+                                    <small class="text-muted">11:58:32 UTC</small>
                                     <span class="badge bg-warning">WARN</span>
                                 </div>
                                 <div>Battery temperature approaching lower limit</div>
                             </div>
                             <div class="log-entry">
                                 <div class="d-flex justify-content-between">
-                                    <small class="text-muted">14:25:18 UTC</small>
+                                    <small class="text-muted">11:55:18 UTC</small>
                                     <span class="badge bg-info">INFO</span>
                                 </div>
                                 <div>Attitude adjustment complete</div>
                             </div>
                             <div class="log-entry">
                                 <div class="d-flex justify-content-between">
-                                    <small class="text-muted">14:22:05 UTC</small>
+                                    <small class="text-muted">11:52:05 UTC</small>
                                     <span class="badge bg-info">INFO</span>
                                 </div>
                                 <div>Solar panels generating 45W</div>
                             </div>
                             <div class="log-entry error">
                                 <div class="d-flex justify-content-between">
-                                    <small class="text-muted">14:20:51 UTC</small>
+                                    <small class="text-muted">11:50:51 UTC</small>
                                     <span class="badge bg-danger">ERROR</span>
                                 </div>
                                 <div>Balloon system not detected</div>
                             </div>
                             <div class="log-entry">
                                 <div class="d-flex justify-content-between">
-                                    <small class="text-muted">14:18:37 UTC</small>
+                                    <small class="text-muted">11:48:37 UTC</small>
                                     <span class="badge bg-info">INFO</span>
                                 </div>
                                 <div>Iridium connection established</div>
@@ -349,7 +352,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        <button class="btn btn-sm btn-outline-primary w-100">
+                        <button class="btn btn-sm btn-outline-primary w-100" id="run-diagnostic-btn">
                             <i class="bi bi-arrow-repeat"></i> Run Full Diagnostic
                         </button>
                     </div>
@@ -407,22 +410,22 @@
                     </div>
                     <div class="card-body">
                         <div class="d-grid gap-2">
-                            <button class="btn btn-sm btn-outline-secondary">Reset Power Module</button>
-                            <button class="btn btn-sm btn-outline-secondary">Ping Communication</button>
-                            <button class="btn btn-sm btn-outline-secondary">Run Diagnostics</button>
-                            <button class="btn btn-sm btn-outline-secondary">Calibrate Sensors</button>
-                            <button class="btn btn-sm btn-outline-danger">Emergency Stop</button>
+                            <button class="btn btn-sm btn-outline-secondary" id="reset-power-btn">Reset Power Module</button>
+                            <button class="btn btn-sm btn-outline-secondary" id="ping-comms-btn">Ping Communication</button>
+                            <button class="btn btn-sm btn-outline-secondary" id="run-diag-btn">Run Diagnostics</button>
+                            <button class="btn btn-sm btn-outline-secondary" id="calibrate-sensors-btn">Calibrate Sensors</button>
+                            <button class="btn btn-sm btn-outline-danger" id="emergency-stop-btn">Emergency Stop</button>
                         </div>
                         <hr>
                         <h6>Command History</h6>
                         <div class="command-history">
                             <div class="mb-2">
-                                <small class="text-muted">14:25:18 UTC</small>
+                                <small class="text-muted">11:55:18 UTC</small>
                                 <div>Sent: Sensor calibration request</div>
                                 <div>Response: Calibration initiated</div>
                             </div>
                             <div class="mb-2">
-                                <small class="text-muted">14:20:51 UTC</small>
+                                <small class="text-muted">11:50:51 UTC</small>
                                 <div>Sent: System status query</div>
                                 <div>Response: Status report received</div>
                             </div>
@@ -441,11 +444,13 @@
                         <h6>Threshold Settings</h6>
                         <div class="mb-3">
                             <label class="form-label">Temperature Alert Threshold</label>
-                            <input type="range" class="form-range" min="-50" max="50" value="40">
+                            <input type="range" class="form-range" min="-50" max="50" value="40" id="temp-threshold">
+                            <small id="temp-threshold-value">40°C</small>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Battery Warning Level</label>
-                            <input type="range" class="form-range" min="10" max="90" value="20">
+                            <input type="range" class="form-range" min="10" max="90" value="20" id="battery-threshold">
+                            <small id="battery-threshold-value">20%</small>
                         </div>
                         <hr>
                         <h6>Notification Preferences</h6>
@@ -458,16 +463,16 @@
                             <label class="form-check-label" for="notify-warnings">Warning Alerts</label>
                         </div>
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <button class="btn btn-sm btn-outline-primary">Save Preset</button>
-                            <button class="btn btn-sm btn-outline-secondary">Load Preset</button>
+                            <button class="btn btn-sm btn-outline-primary" id="save-preset-btn">Save Preset</button>
+                            <button class="btn btn-sm btn-outline-secondary" id="load-preset-btn">Load Preset</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <script src="js/script.js"></script>
 </body>
 </html>

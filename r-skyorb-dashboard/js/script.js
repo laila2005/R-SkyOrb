@@ -1,40 +1,26 @@
 document.addEventListener('DOMContentLoaded', function() {
     // =====================
-    // Dark Mode Functionality
+    // Theme Management
     // =====================
     const darkModeToggle = document.getElementById('darkModeToggle');
-    const icon = darkModeToggle.querySelector('i');
-    
-    // Initialize theme from localStorage or prefer-color-scheme
-    const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
     let currentTheme = localStorage.getItem('theme') || 
-                      (prefersDarkScheme.matches ? 'dark' : 'light');
+                      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     
-    // Apply initial theme
-    applyTheme(currentTheme);
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        darkModeToggle.innerHTML = theme === 'dark' ? 
+            '<i class="bi bi-sun-fill"></i> Light Mode' : 
+            '<i class="bi bi-moon-fill"></i> Dark Mode';
+        updateChartsForTheme(theme);
+    }
 
-    // Theme toggle handler
-    darkModeToggle.addEventListener('click', function() {
+    darkModeToggle.addEventListener('click', () => {
         currentTheme = currentTheme === 'light' ? 'dark' : 'light';
         applyTheme(currentTheme);
         localStorage.setItem('theme', currentTheme);
     });
 
-    function applyTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        
-        // Update button icon and text
-        if (theme === 'dark') {
-            icon.classList.replace('bi-moon-fill', 'bi-sun-fill');
-            darkModeToggle.innerHTML = '<i class="bi bi-sun-fill"></i> Light Mode';
-        } else {
-            icon.classList.replace('bi-sun-fill', 'bi-moon-fill');
-            darkModeToggle.innerHTML = '<i class="bi bi-moon-fill"></i> Dark Mode';
-        }
-        
-        // Update charts if they exist
-        updateChartsForTheme(theme);
-    }
+    applyTheme(currentTheme);
 
     // =====================
     // Filter Functionality
@@ -43,37 +29,54 @@ document.addEventListener('DOMContentLoaded', function() {
     
     filterButtons.forEach(button => {
         button.addEventListener('click', function() {
-            const filter = this.getAttribute('data-filter');
-            
-            // Update active button
             filterButtons.forEach(btn => {
                 btn.classList.remove('active');
-                btn.classList.remove('bg-primary', 'text-white');
+                btn.classList.add('btn-outline-primary');
             });
-            
             this.classList.add('active');
-            if (this.classList.contains('nav-link')) {
-                this.classList.add('bg-primary', 'text-white');
-            }
+            this.classList.remove('btn-outline-primary');
             
-            // Filter cards
+            const filter = this.getAttribute('data-filter');
             document.querySelectorAll('.filter-item').forEach(card => {
-                if (filter === 'all' || card.getAttribute('data-category') === filter) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
+                card.style.display = (filter === 'all' || card.getAttribute('data-category') === filter) ? 'block' : 'none';
             });
         });
     });
 
     // =====================
-    // Chart Initialization
+    // Search Functionality
+    // =====================
+    const searchInput = document.getElementById('search-input');
+    const searchBtn = document.getElementById('search-btn');
+    
+    searchBtn.addEventListener('click', () => {
+        const query = searchInput.value.toLowerCase();
+        document.querySelectorAll('.card').forEach(card => {
+            const text = card.textContent.toLowerCase();
+            card.parentElement.style.display = text.includes(query) ? 'block' : 'none';
+        });
+    });
+
+    // =====================
+    // Log Filter Functionality
+    // =====================
+    const logFilterInput = document.getElementById('log-filter-input');
+    const logFilterBtn = document.getElementById('log-filter-btn');
+    
+    logFilterBtn.addEventListener('click', () => {
+        const query = logFilterInput.value.toLowerCase();
+        document.querySelectorAll('.log-entry').forEach(entry => {
+            const text = entry.textContent.toLowerCase();
+            entry.style.display = text.includes(query) ? 'block' : 'none';
+        });
+    });
+
+    // =====================
+    // Chart Management
     // =====================
     let telemetryChart, powerFlowChart;
     
     function initCharts() {
-        // Power Flow Chart
         const powerCtx = document.getElementById('powerFlowChart')?.getContext('2d');
         if (powerCtx) {
             powerFlowChart = new Chart(powerCtx, {
@@ -83,7 +86,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // Telemetry Chart
         const telemetryCtx = document.getElementById('telemetryChart')?.getContext('2d');
         if (telemetryCtx) {
             telemetryChart = new Chart(telemetryCtx, {
@@ -92,12 +94,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 options: getChartOptions('Voltage (V)')
             });
         }
-        
-        // Chart theme update handler
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-            const newTheme = e.matches ? 'dark' : 'light';
-            updateChartsForTheme(newTheme);
-        });
     }
     
     function getChartData(type) {
@@ -105,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const labels = Array.from({length: 24}, (_, i) => {
             const d = new Date(now);
             d.setHours(d.getHours() - 23 + i);
-            return d.getHours() + ':00';
+            return d.getHours().toString().padStart(2, '0') + ':00';
         });
         
         if (type === 'power') {
@@ -151,19 +147,13 @@ document.addEventListener('DOMContentLoaded', function() {
             plugins: {
                 legend: {
                     position: 'top',
-                    labels: {
-                        color: 'var(--text-color)'
-                    }
+                    labels: { color: 'var(--text-color)' }
                 }
             },
             scales: {
                 x: {
-                    grid: {
-                        color: 'var(--chart-grid)'
-                    },
-                    ticks: {
-                        color: 'var(--chart-text)'
-                    }
+                    grid: { color: 'var(--chart-grid)' },
+                    ticks: { color: 'var(--chart-text)' }
                 },
                 y: {
                     beginAtZero: false,
@@ -172,12 +162,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         text: yLabel,
                         color: 'var(--chart-text)'
                     },
-                    grid: {
-                        color: 'var(--chart-grid)'
-                    },
-                    ticks: {
-                        color: 'var(--chart-text)'
-                    }
+                    grid: { color: 'var(--chart-grid)' },
+                    ticks: { color: 'var(--chart-text)' }
                 }
             }
         };
@@ -187,22 +173,108 @@ document.addEventListener('DOMContentLoaded', function() {
         const gridColor = theme === 'dark' ? '#333' : '#e9ecef';
         const textColor = theme === 'dark' ? '#aaa' : '#495057';
         
-        if (powerFlowChart) {
-            powerFlowChart.options.scales.x.grid.color = gridColor;
-            powerFlowChart.options.scales.y.grid.color = gridColor;
-            powerFlowChart.options.scales.x.ticks.color = textColor;
-            powerFlowChart.options.scales.y.ticks.color = textColor;
-            powerFlowChart.update();
-        }
-        
+        [powerFlowChart, telemetryChart].forEach(chart => {
+            if (chart) {
+                chart.options.scales.x.grid.color = gridColor;
+                chart.options.scales.y.grid.color = gridColor;
+                chart.options.scales.x.ticks.color = textColor;
+                chart.options.scales.y.ticks.color = textColor;
+                chart.options.plugins.legend.labels.color = textColor;
+                chart.update();
+            }
+        });
+    }
+
+    // =====================
+    // Telemetry Controls
+    // =====================
+    const telemetrySelect = document.getElementById('telemetry-select');
+    const timeRange = document.getElementById('time-range');
+    const timeRangeLabel = document.getElementById('time-range-label');
+    
+    telemetrySelect.addEventListener('change', () => {
         if (telemetryChart) {
-            telemetryChart.options.scales.x.grid.color = gridColor;
-            telemetryChart.options.scales.y.grid.color = gridColor;
-            telemetryChart.options.scales.x.ticks.color = textColor;
-            telemetryChart.options.scales.y.ticks.color = textColor;
+            telemetryChart.data = getChartData(telemetrySelect.value);
+            telemetryChart.options.scales.y.title.text = telemetrySelect.value === 'power' ? 'Current (A)' : 
+                                                       telemetrySelect.value === 'temp' ? 'Temperature (°C)' : 
+                                                       telemetrySelect.value === 'comms' ? 'Signal Strength' : 'Altitude (ft)';
             telemetryChart.update();
         }
+    });
+    
+    timeRange.addEventListener('input', () => {
+        const hours = timeRange.value;
+        timeRangeLabel.textContent = `Last ${hours} hour${hours > 1 ? 's' : ''}`;
+        if (telemetryChart) {
+            const now = new Date();
+            const labels = Array.from({length: hours}, (_, i) => {
+                const d = new Date(now);
+                d.setHours(d.getHours() - (hours - 1) + i);
+                return d.getHours().toString().padStart(2, '0') + ':00';
+            });
+            telemetryChart.data.labels = labels;
+            telemetryChart.update();
+        }
+    });
+
+    // =====================
+    // Manual Commands
+    // =====================
+    const commandButtons = {
+        'reset-power-btn': 'Reset Power Module',
+        'ping-comms-btn': 'Ping Communication',
+        'run-diag-btn': 'Run Diagnostics',
+        'calibrate-sensors-btn': 'Calibrate Sensors',
+        'emergency-stop-btn': 'Emergency Stop'
+    };
+    
+    Object.keys(commandButtons).forEach(id => {
+        const btn = document.getElementById(id);
+        btn.addEventListener('click', () => {
+            const command = commandButtons[id];
+            addCommandHistory(command, `Executing ${command.toLowerCase()}`);
+        });
+    });
+
+    function addCommandHistory(command, response) {
+        const history = document.querySelector('.command-history');
+        const now = new Date();
+        const entry = document.createElement('div');
+        entry.className = 'mb-2';
+        entry.innerHTML = `
+            <small class="text-muted">${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} UTC</small>
+            <div>Sent: ${command}</div>
+            <div>Response: ${response}</div>
+        `;
+        history.prepend(entry);
+        if (history.children.length > 5) {
+            history.removeChild(history.lastChild);
+        }
     }
+
+    // =====================
+    // Configurable Controls
+    // =====================
+    const tempThreshold = document.getElementById('temp-threshold');
+    const tempThresholdValue = document.getElementById('temp-threshold-value');
+    const batteryThreshold = document.getElementById('battery-threshold');
+    const batteryThresholdValue = document.getElementById('battery-threshold-value');
+    
+    tempThreshold.addEventListener('input', () => {
+        tempThresholdValue.textContent = `${tempThreshold.value}°C`;
+    });
+    
+    batteryThreshold.addEventListener('input', () => {
+        batteryThresholdValue.textContent = `${batteryThreshold.value}%`;
+    });
+
+    document.getElementById('save-preset-btn').addEventListener('click', () => {
+        alert('Preset saved!');
+    });
+    
+    document.getElementById('load-preset-btn').addEventListener('click', () => {
+        alert('Preset loaded!');
+    });
 
     // =====================
     // Real-time Updates
@@ -211,19 +283,30 @@ document.addEventListener('DOMContentLoaded', function() {
         const now = new Date();
         document.getElementById('last-update').textContent = 
             now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+        document.getElementById('health-check-time').textContent = 
+            now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
     }
     
     function simulateRealTimeUpdates() {
-        // Update battery level randomly
+        // Update battery level
         const batteryLevel = document.querySelector('.progress-bar');
         if (batteryLevel) {
-            const current = parseInt(batteryLevel.style.width || '100');
-            const newLevel = Math.max(10, Math.min(100, current + (Math.random() * 2 - 1)));
+            const current = parseInt(batteryLevel.style.width) || 78;
+            const newLevel = Math.max(10, Math.min(100, current + (Math.random() * 4 - 2)));
             batteryLevel.style.width = `${newLevel}%`;
             batteryLevel.textContent = `${Math.round(newLevel)}%`;
+            batteryLevel.setAttribute('aria-valuenow', newLevel);
         }
         
-        // Add random log entry
+        // Update charts
+        if (powerFlowChart) {
+            powerFlowChart.data.datasets[0].data.push(2 + Math.random() * 0.3);
+            powerFlowChart.data.datasets[1].data.push(2.3 + Math.random() * 0.3);
+            powerFlowChart.data.datasets.forEach(ds => ds.data.shift());
+            powerFlowChart.update();
+        }
+        
+        // Update logs
         const logMessages = [
             'Telemetry packet received',
             'Attitude adjustment complete',
@@ -233,18 +316,22 @@ document.addEventListener('DOMContentLoaded', function() {
             'Navigation system calibrating',
             'Payload interface active'
         ];
-        
-        const logContainer = document.querySelector('.command-history');
+        const logContainer = document.querySelector('.log-container');
         if (logContainer) {
             const now = new Date();
             const newLog = document.createElement('div');
-            newLog.className = 'mb-2';
+            newLog.className = 'log-entry';
+            const message = logMessages[Math.floor(Math.random() * logMessages.length)];
+            const badge = message.includes('warning') ? 'bg-warning' : 'bg-info';
             newLog.innerHTML = `
-                <small class="text-muted">${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} UTC</small>
-                <div>${logMessages[Math.floor(Math.random() * logMessages.length)]}</div>
+                <div class="d-flex justify-content-between">
+                    <small class="text-muted">${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} UTC</small>
+                    <span class="badge ${badge}">${message.includes('warning') ? 'WARN' : 'INFO'}</span>
+                </div>
+                <div>${message}</div>
             `;
             logContainer.prepend(newLog);
-            if (logContainer.children.length > 5) {
+            if (logContainer.children.length > 6) {
                 logContainer.removeChild(logContainer.lastChild);
             }
         }
@@ -253,12 +340,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =====================
+    // MiniMap Placeholder
+    // =====================
+    function initMiniMap() {
+        const miniMap = document.getElementById('miniMap');
+        if (miniMap) {
+            miniMap.innerHTML = '<div style="text-align: center; padding-top: 60px; color: var(--text-color);">Map Placeholder (Requires Leaflet.js)</div>';
+        }
+    }
+
+    // =====================
     // Initialization
     // =====================
     initCharts();
+    initMiniMap();
     updateLastUpdateTime();
     setInterval(simulateRealTimeUpdates, 5000);
-    
-    // Initialize with 'All' filter active
-    document.querySelector('[data-filter="all"]').click();
+    document.getElementById('filter-all').click();
 });
